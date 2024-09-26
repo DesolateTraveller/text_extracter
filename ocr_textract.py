@@ -41,29 +41,6 @@ st.divider()
 #---------------------------------------------------------------------------------------------------------------------------------
 
 @st.cache_data(ttl="2h")
-def extract_images_and_metadata_from_pdf(pdf_file):
-    document = fitz.open(stream=pdf_file.read(), filetype="pdf")
-    images_and_metadata = []
-    for page_num in range(len(document)):
-        page = document.load_page(page_num)
-        image_list = page.get_images(full=True)
-        for img_index, img in enumerate(image_list):
-            xref = img[0]
-            base_image = document.extract_image(xref)
-            image_bytes = base_image["image"]
-            image = Image.open(BytesIO(image_bytes))
-            metadata = {
-                "Page Number": page_num + 1,
-                "Image Number": img_index + 1,
-                "Image Width": image.width,
-                "Image Height": image.height,
-                "Image Format": image.format,
-                "Image Mode": image.mode
-                }
-            images_and_metadata.append((image, metadata))
-    return images_and_metadata
-
-@st.cache_data(ttl="2h")
 def extract_images_from_pdf(pdf_file):
     pdf_document = fitz.open(stream=pdf_file.read(), filetype="pdf")
     images = []
@@ -112,7 +89,8 @@ if pdf_img_files is not None:
                 st.subheader(f"Preview : {pdf_file.name}",divider='blue')
                 if images:
                     st.markdown(f"Found {len(images)} image(s) in the file name as: {pdf_file.name}.",unsafe_allow_html=True)
-                    st.image(images, use_column_width=True)
+                    for img in images:
+                        st.image(img, use_column_width=True)
 
         with col2:
 
@@ -120,22 +98,21 @@ if pdf_img_files is not None:
                 
                 st.subheader(f"Extracted Information : {pdf_file.name}", divider='blue')
                 if images:
-
                     with st.spinner(f"Performing extraction info on images from {pdf_file.name}..."):
                         extracted_data = perform_ocr_on_images(images)
-                        all_extracted_data = []
-                        all_extracted_data.extend(extracted_data)
                         st.success(f"Extraction completed for {pdf_file.name}.")
-                        st.write(all_extracted_data)
+                        st.write(extracted_data)
                 else:
                     st.warning(f"No images found in {pdf_file.name}.")
     
-                if all_extracted_data:
+                if extracted_data:
                     with st.spinner("Converting extracted data to CSV..."):
-                        csv_data = convert_to_csv(all_extracted_data)
+                        csv_data = convert_to_csv(extracted_data)
 
             csv = csv_data.to_csv(index=False).encode('utf-8')
-            st.download_button(label="Download CSV",data=csv,file_name='invoice_data.csv',mime='text/csv',)
+            st.download_button(label="Download CSV",data=csv,
+                               file_name=f'{pdf_file.name}_extracted_data.csv',
+                               mime='text/csv',key=f'download_button_{idx}')
 else:
     st.warning("No text extracted from the uploaded files.")
 
