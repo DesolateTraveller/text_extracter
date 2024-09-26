@@ -4,3 +4,7 @@ numpy
 pandas
 matplotlib
 seaborn
+#----------------
+fitz
+easyocr
+opencv-python-headless
