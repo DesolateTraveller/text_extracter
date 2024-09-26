@@ -101,7 +101,7 @@ if pdf_img_files is not None:
                     with st.spinner(f"Performing extraction info on images from {pdf_file.name}..."):
                         extracted_data = perform_ocr_on_images(images)
                         st.success(f"Extraction completed for {pdf_file.name}.")
-                        st.write(extracted_data)
+                        st.table(extracted_data)
                 else:
                     st.warning(f"No images found in {pdf_file.name}.")
     
