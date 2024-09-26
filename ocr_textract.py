@@ -123,14 +123,15 @@ if pdf_img_files is not None:
 
                     with st.spinner(f"Performing extraction info on images from {pdf_file.name}..."):
                         extracted_data = perform_ocr_on_images(image)
-                        #all_extracted_data.extend(extracted_data)
+                        all_extracted_data = []
+                        all_extracted_data.extend(extracted_data)
                         st.success(f"OCR completed for {pdf_file.name}.")
                 else:
                     st.warning(f"No images found in {pdf_file.name}.")
     
-                if extracted_data:
+                if all_extracted_data:
                     with st.spinner("Converting extracted data to CSV..."):
-                        csv_data = convert_to_csv(extracted_data)
+                        csv_data = convert_to_csv(all_extracted_data)
 
                 st.write("Download CSV:")
                 csv = csv_data.to_csv(index=False).encode('utf-8')
