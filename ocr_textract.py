@@ -63,8 +63,8 @@ def perform_ocr_on_images(images):
     return extracted_data
 
 @st.cache_data(ttl="2h")
-def convert_to_csv(data):
-    df = pd.DataFrame(data, columns=["Extracted Data"])
+def convert_to_csv(extracted_data):
+    df = pd.DataFrame(extracted_data, columns=["Extracted Text"])
     return df
 
 #---------------------------------------------------------------------------------------------------------------------------------
