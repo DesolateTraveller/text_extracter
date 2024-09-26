@@ -81,25 +81,82 @@ def extract_images_and_metadata_from_pdf(pdf_file):
             images_and_metadata.append((image, metadata))
     return images_and_metadata
 
+# Function to extract images from PDF pages
+def extract_images_from_pdf(pdf_file):
+    pdf_document = fitz.open(stream=pdf_file.read(), filetype="pdf")
+    images = []
+    
+    for page_num in range(len(pdf_document)):
+        page = pdf_document.load_page(page_num)
+        for image_index, img in enumerate(page.get_images(full=True)):
+            xref = img[0]
+            base_image = pdf_document.extract_image(xref)
+            image_bytes = base_image["image"]
+            images.append(image_bytes)
+    
+    return images
+
+# Function to perform OCR on images and extract text
+def perform_ocr_on_images(images):
+    reader = easyocr.Reader(['en'])
+    extracted_data = []
+    
+    for img_bytes in images:
+        # Convert byte data to image format and perform OCR
+        text_result = reader.readtext(img_bytes, detail=0, paragraph=True)
+        extracted_data.extend(text_result)
+    
+    return extracted_data
+
+# Function to convert extracted text to CSV format
+def convert_to_csv(data):
+    df = pd.DataFrame(data, columns=["Extracted Data"])
+    return df
+
 #---------------------------------------------------------------------------------------------------------------------------------
 ### Main app
 #---------------------------------------------------------------------------------------------------------------------------------
 
+# File uploader for multiple files
+uploaded_files = st.file_uploader("Upload your PDFs", type="pdf", accept_multiple_files=True)
 
+if uploaded_files is not None and len(uploaded_files) > 0:
+    all_extracted_data = []
 
-# File uploader
-uploaded_file = st.file_uploader("Upload your PDF", type="pdf")
+    # Loop through each uploaded PDF file
+    for uploaded_file in uploaded_files:
+        st.write(f"Processing file: {uploaded_file.name}")
+        
+        # Extract images from the PDF
+        with st.spinner(f"Extracting images from {uploaded_file.name}..."):
+            images = extract_images_from_pdf(uploaded_file)
+        
+        if images:
+            # Perform OCR on the extracted images
+            with st.spinner(f"Performing OCR on images from {uploaded_file.name}..."):
+                extracted_data = perform_ocr_on_images(images)
+                all_extracted_data.extend(extracted_data)
+            st.success(f"OCR completed for {uploaded_file.name}.")
+        else:
+            st.warning(f"No images found in {uploaded_file.name}.")
+    
+    # Combine and convert the extracted data to CSV format
+    if all_extracted_data:
+        with st.spinner("Converting extracted data to CSV..."):
+            csv_data = convert_to_csv(all_extracted_data)
+        
+        # Provide a download button for the CSV file
+        st.write("Download CSV:")
+        csv = csv_data.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="Download CSV",
+            data=csv,
+            file_name='invoice_data.csv',
+            mime='text/csv',
+        )
+    else:
+        st.warning("No text extracted from the uploaded files.")
 
-if uploaded_file is not None:
-    with st.spinner("Extracting text from PDF..."):
-        extracted_text = extract_images_and_metadata_from_pdf(uploaded_file)
-        st.success("Text extraction completed.")
-
-        st.subheader(f"Preview : {uploaded_file.name}",divider='blue')
-        if extracted_text:
-            st.markdown(f"Found {len(extracted_text)} image(s) in the PDF {uploaded_file.name}.",unsafe_allow_html=True)
-            for img_index, (image, metadata) in enumerate(extracted_text):
-                st.image(image, caption=f"Image {img_index + 1} from Page {metadata['Page Number']}", use_column_width=True)
     
 
 
