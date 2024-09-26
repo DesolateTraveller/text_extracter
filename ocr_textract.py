@@ -94,10 +94,13 @@ if uploaded_file is not None:
     with st.spinner("Extracting text from PDF..."):
         extracted_text = extract_images_and_metadata_from_pdf(uploaded_file)
         st.success("Text extraction completed.")
+
+        st.subheader(f"Preview : {uploaded_file.name}",divider='blue')
+        if extracted_text:
+            st.markdown(f"Found {len(extracted_text)} image(s) in the PDF {uploaded_file.name}.",unsafe_allow_html=True)
+            for img_index, (image, metadata) in enumerate(extracted_text):
+                st.image(image, caption=f"Image {img_index + 1} from Page {metadata['Page Number']}", use_column_width=True)
     
-    # Display extracted text (optional)
-    st.write("Extracted Text:")
-    st.text_area("Extracted Text", value=extracted_text, height=300)
 
 
     
