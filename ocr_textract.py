@@ -112,7 +112,7 @@ if pdf_img_files is not None:
             csv = csv_data.to_csv(index=False).encode('utf-8')
             st.download_button(label="Download CSV",data=csv,
                                file_name=f'{pdf_file.name}_extracted_data.csv',
-                               mime='text/csv',key=f'download_button_{idx}')
+                               mime='text/csv',key=f'download_button_{pdf_file.name}')
 else:
     st.warning("No text extracted from the uploaded files.")
 
