@@ -126,6 +126,7 @@ if pdf_img_files is not None:
                         all_extracted_data = []
                         all_extracted_data.extend(extracted_data)
                         st.success(f"Extraction completed for {pdf_file.name}.")
+                        st.write(all_extracted_data)
                 else:
                     st.warning(f"No images found in {pdf_file.name}.")
     
