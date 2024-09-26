@@ -111,12 +111,12 @@ if pdf_img_files is not None:
 
                 st.subheader(f"Preview : {pdf_file.name}",divider='blue')
                 if images:
-                    st.markdown(f"Found {len(images)} image(s) in the PDF {pdf_file.name}.",unsafe_allow_html=True)
+                    st.markdown(f"Found {len(images)} image(s) in the file name as: {pdf_file.name}.",unsafe_allow_html=True)
                     st.image(images, use_column_width=True)
 
         with col2:
 
-            with st.container(height=700,border=True):
+            with st.container(border=True):
                 
                 st.subheader(f"Extracted Information : {pdf_file.name}", divider='blue')
                 if images:
@@ -125,7 +125,7 @@ if pdf_img_files is not None:
                         extracted_data = perform_ocr_on_images(images)
                         all_extracted_data = []
                         all_extracted_data.extend(extracted_data)
-                        st.success(f"OCR completed for {pdf_file.name}.")
+                        st.success(f"Extraction completed for {pdf_file.name}.")
                 else:
                     st.warning(f"No images found in {pdf_file.name}.")
     
@@ -133,9 +133,8 @@ if pdf_img_files is not None:
                     with st.spinner("Converting extracted data to CSV..."):
                         csv_data = convert_to_csv(all_extracted_data)
 
-                st.write("Download CSV:")
-                csv = csv_data.to_csv(index=False).encode('utf-8')
-                st.download_button(label="Download CSV",data=csv,file_name='invoice_data.csv',mime='text/csv',)
+            csv = csv_data.to_csv(index=False).encode('utf-8')
+            st.download_button(label="Download CSV",data=csv,file_name='invoice_data.csv',mime='text/csv',)
 else:
     st.warning("No text extracted from the uploaded files.")
 
