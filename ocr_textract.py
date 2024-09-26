@@ -41,24 +41,6 @@ st.divider()
 #---------------------------------------------------------------------------------------------------------------------------------
 
 @st.cache_data(ttl="2h")
-def extract_text_from_pdf(pdf_file):
-    pdf_document = fitz.open(stream=pdf_file.read(), filetype="pdf")
-    text = ""
-    for page_num in range(len(pdf_document)):
-        page = pdf_document.load_page(page_num)
-        text += page.get_text("text")
-    return text
-
-@st.cache_data(ttl="2h")
-def perform_ocr(text):
-    reader = easyocr.Reader(['en'])
-    result = reader.readtext(text)
-    extracted_data = []
-    for item in result:
-        extracted_data.append(item[1]) 
-    return extracted_data
-
-@st.cache_data(ttl="2h")
 def extract_images_and_metadata_from_pdf(pdf_file):
     document = fitz.open(stream=pdf_file.read(), filetype="pdf")
     images_and_metadata = []
@@ -112,37 +94,49 @@ def convert_to_csv(data):
 ### Main app
 #---------------------------------------------------------------------------------------------------------------------------------
 
-uploaded_files = st.file_uploader("Upload your PDFs", type="pdf", accept_multiple_files=True)
+st.warning("This app allows you to extract image from the uploaded pdf files")  
 
-if uploaded_files is not None and len(uploaded_files) > 0:
-    all_extracted_data = []
+pdf_img_files = st.file_uploader("**Choose PDF files**",type="pdf",accept_multiple_files=True)
+st.divider()
 
-    for uploaded_file in uploaded_files:
-        st.write(f"Processing file: {uploaded_file.name}")
-        with st.spinner(f"Extracting images from {uploaded_file.name}..."):
-            images = extract_images_from_pdf(uploaded_file)
-            st.image(images, use_column_width=True)
+if pdf_img_files is not None:
+    for pdf_file in pdf_img_files:
+        images_and_metadata = extract_images_and_metadata_from_pdf(pdf_file)
 
-        if images:
+        col1, col2 = st.columns((0.4,0.6))
+        with col1:
 
-            with st.spinner(f"Performing OCR on images from {uploaded_file.name}..."):
-                extracted_data = perform_ocr_on_images(images)
-                all_extracted_data.extend(extracted_data)
-            st.success(f"OCR completed for {uploaded_file.name}.")
-        else:
-            st.warning(f"No images found in {uploaded_file.name}.")
+            with st.container(border=True):
+
+                st.subheader(f"Preview : {pdf_file.name}",divider='blue')
+                if images_and_metadata:
+                    st.markdown(f"Found {len(images_and_metadata)} image(s) in the PDF {pdf_file.name}.",unsafe_allow_html=True)
+                    for img_index, (image, metadata) in enumerate(images_and_metadata):
+                        st.image(image, caption=f"Image {img_index + 1} from Page {metadata['Page Number']}", use_column_width=True)
+
+        with col2:
+
+            with st.container(height=700,border=True):
+                
+                st.subheader(f"Extracted Information : {pdf_file.name}", divider='blue')
+                if image:
+
+                    with st.spinner(f"Performing extraction info on images from {pdf_file.name}..."):
+                        extracted_data = perform_ocr_on_images(image)
+                        #all_extracted_data.extend(extracted_data)
+                        st.success(f"OCR completed for {pdf_file.name}.")
+                else:
+                    st.warning(f"No images found in {pdf_file.name}.")
     
-    if all_extracted_data:
+                if extracted_data:
+                    with st.spinner("Converting extracted data to CSV..."):
+                        csv_data = convert_to_csv(extracted_data)
 
-        with st.spinner("Converting extracted data to CSV..."):
-            csv_data = convert_to_csv(all_extracted_data)
-
-        st.write("Download CSV:")
-        csv = csv_data.to_csv(index=False).encode('utf-8')
-        st.download_button(label="Download CSV",data=csv,file_name='invoice_data.csv',mime='text/csv',)
-        
-    else:
-        st.warning("No text extracted from the uploaded files.")
+                st.write("Download CSV:")
+                csv = csv_data.to_csv(index=False).encode('utf-8')
+                st.download_button(label="Download CSV",data=csv,file_name='invoice_data.csv',mime='text/csv',)
+else:
+    st.warning("No text extracted from the uploaded files.")
 
 
     
