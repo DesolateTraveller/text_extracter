@@ -101,7 +101,8 @@ st.divider()
 
 if pdf_img_files is not None:
     for pdf_file in pdf_img_files:
-        images_and_metadata = extract_images_and_metadata_from_pdf(pdf_file)
+        #images_and_metadata = extract_images_and_metadata_from_pdf(pdf_file)
+        images = extract_images_from_pdf(pdf_file)
 
         col1, col2 = st.columns((0.4,0.6))
         with col1:
@@ -109,20 +110,19 @@ if pdf_img_files is not None:
             with st.container(border=True):
 
                 st.subheader(f"Preview : {pdf_file.name}",divider='blue')
-                if images_and_metadata:
-                    st.markdown(f"Found {len(images_and_metadata)} image(s) in the PDF {pdf_file.name}.",unsafe_allow_html=True)
-                    for img_index, (image, metadata) in enumerate(images_and_metadata):
-                        st.image(image, caption=f"Image {img_index + 1} from Page {metadata['Page Number']}", use_column_width=True)
+                if images:
+                    st.markdown(f"Found {len(images)} image(s) in the PDF {pdf_file.name}.",unsafe_allow_html=True)
+                    st.image(images, use_column_width=True)
 
         with col2:
 
             with st.container(height=700,border=True):
                 
                 st.subheader(f"Extracted Information : {pdf_file.name}", divider='blue')
-                if image:
+                if images:
 
                     with st.spinner(f"Performing extraction info on images from {pdf_file.name}..."):
-                        extracted_data = perform_ocr_on_images(image)
+                        extracted_data = perform_ocr_on_images(images)
                         all_extracted_data = []
                         all_extracted_data.extend(extracted_data)
                         st.success(f"OCR completed for {pdf_file.name}.")
