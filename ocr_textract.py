@@ -14,6 +14,7 @@ import requests
 import easyocr
 import fitz  # PyMuPDF
 from io import BytesIO
+from PIL import Image
 #---------------------------------------------------------------------------------------------------------------------------------
 ### Title and description for your Streamlit app
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -58,6 +59,28 @@ def convert_to_csv(data):
     df = pd.DataFrame(data, columns=["Extracted Data"])
     return df
 
+def extract_images_and_metadata_from_pdf(pdf_file):
+    document = fitz.open(stream=pdf_file.read(), filetype="pdf")
+    images_and_metadata = []
+    for page_num in range(len(document)):
+        page = document.load_page(page_num)
+        image_list = page.get_images(full=True)
+        for img_index, img in enumerate(image_list):
+            xref = img[0]
+            base_image = document.extract_image(xref)
+            image_bytes = base_image["image"]
+            image = Image.open(BytesIO(image_bytes))
+            metadata = {
+                "Page Number": page_num + 1,
+                "Image Number": img_index + 1,
+                "Image Width": image.width,
+                "Image Height": image.height,
+                "Image Format": image.format,
+                "Image Mode": image.mode
+                }
+            images_and_metadata.append((image, metadata))
+    return images_and_metadata
+
 #---------------------------------------------------------------------------------------------------------------------------------
 ### Main app
 #---------------------------------------------------------------------------------------------------------------------------------
@@ -68,9 +91,8 @@ def convert_to_csv(data):
 uploaded_file = st.file_uploader("Upload your PDF", type="pdf")
 
 if uploaded_file is not None:
-    # Extract text from the PDF
     with st.spinner("Extracting text from PDF..."):
-        extracted_text = extract_text_from_pdf(uploaded_file)
+        extracted_text = extract_images_and_metadata_from_pdf(uploaded_file)
         st.success("Text extraction completed.")
     
     # Display extracted text (optional)
